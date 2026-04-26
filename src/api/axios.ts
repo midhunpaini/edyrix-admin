@@ -12,9 +12,21 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Unwrap CommonResponse envelope: { success, message, data } → data
+    if (
+      res.data &&
+      typeof res.data === "object" &&
+      "success" in res.data &&
+      "data" in res.data
+    ) {
+      res.data = res.data.data;
+    }
+    return res;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url ?? "";
+    if (error.response?.status === 401 && !requestUrl.includes("/auth/logout")) {
       useAuthStore.getState().clearAuth();
       window.location.href = "/login";
     }

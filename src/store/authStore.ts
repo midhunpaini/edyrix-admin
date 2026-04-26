@@ -2,6 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AdminUser } from "../types";
 
+const ADMIN_ROLES = new Set(["super_admin", "admin", "support", "content_manager"]);
+
+export function isAdminUser(user: AdminUser | null): user is AdminUser {
+  return !!user && ADMIN_ROLES.has(user.role);
+}
+
 interface AdminAuthState {
   user: AdminUser | null;
   token: string | null;
@@ -18,7 +24,7 @@ export const useAuthStore = create<AdminAuthState>()(
       token: null,
       isLoading: false,
       setUser: (user, token) => {
-        if (user.role !== "admin") {
+        if (!isAdminUser(user)) {
           set({ user: null, token: null });
           window.location.href = "/login";
           return;

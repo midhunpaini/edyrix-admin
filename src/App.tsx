@@ -8,7 +8,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { DoubtQueuePage } from "./pages/DoubtQueuePage";
 import { QuestionEditorPage } from "./pages/QuestionEditorPage";
 import { StudentListPage } from "./pages/StudentListPage";
-import { useAuthStore } from "./store/authStore";
+import { isAdminUser, useAuthStore } from "./store/authStore";
 
 const qc = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2, retry: 1 } },
@@ -16,13 +16,13 @@ const qc = new QueryClient({
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { token, user } = useAuthStore();
-  if (!token || user?.role !== "admin") return <Navigate to="/login" replace />;
+  if (!token || !isAdminUser(user)) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RootRedirect() {
   const { token, user } = useAuthStore();
-  return <Navigate to={token && user?.role === "admin" ? "/dashboard" : "/login"} replace />;
+  return <Navigate to={token && isAdminUser(user) ? "/dashboard" : "/login"} replace />;
 }
 
 export default function App() {

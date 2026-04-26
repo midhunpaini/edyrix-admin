@@ -18,6 +18,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const { pathname } = useLocation();
   const user = useAuthStore((s) => s.user);
   const title = PAGE_TITLES[pathname] ?? "Admin";
+  const roleLabel = user?.role?.replace(/_/g, " ") ?? "Admin";
 
   return (
     <header className="h-16 bg-white border-b border-ink/8 flex items-center px-6 gap-4 sticky top-0 z-30">
@@ -33,7 +34,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       <div className="flex items-center gap-3">
         <div className="text-right hidden sm:block">
           <p className="text-sm font-semibold font-body text-ink leading-none">{user?.name}</p>
-          <p className="text-xs text-ink-3 font-body mt-0.5">Admin</p>
+          <p className="text-xs text-ink-3 font-body mt-0.5 capitalize">{roleLabel}</p>
         </div>
         {user?.avatar_url ? (
           <img src={user.avatar_url} className="w-8 h-8 rounded-full object-cover" alt="" />

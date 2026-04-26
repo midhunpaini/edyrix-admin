@@ -6,7 +6,7 @@ export interface User {
   phone: string | null;
   email: string | null;
   avatar_url: string | null;
-  role: "student" | "admin";
+  role: "student";
   current_class: number | null;
   medium: string;
   created_at: string;
@@ -38,8 +38,9 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string | null;
-  role: "admin";
+  role: "super_admin" | "admin" | "support" | "content_manager";
   avatar_url: string | null;
+  created_at: string;
 }
 
 export interface RevenueDay {
