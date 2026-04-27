@@ -5,7 +5,8 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Icon } from "./Icon";
+import { Icons } from "../../lib/icons";
 import { Button } from "./Button";
 
 interface DataTableProps<T> {
@@ -59,10 +60,10 @@ export function DataTable<T>({ data, columns, pageSize = 20 }: DataTableProps<T>
           </p>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-              <ChevronLeft size={14} /> Prev
+              <Icon name={Icons.back} size={16} aria-hidden /> Prev
             </Button>
             <Button variant="secondary" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-              Next <ChevronRight size={14} />
+              Next <Icon name={Icons.forward} size={16} aria-hidden />
             </Button>
           </div>
         </div>

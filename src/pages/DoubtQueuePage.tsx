@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
 import { useAdminDoubts, useAnswerDoubt } from "../hooks/useDoubts";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Icon } from "../components/ui/Icon";
+import { Icons } from "../lib/icons";
 import type { AdminDoubt } from "../types";
 
 type Tab = "pending" | "answered";
@@ -37,6 +38,7 @@ function DoubtCard({
         </div>
         {doubt.status === "pending" && (
           <Button size="sm" onClick={() => onAnswer(doubt)}>
+            <Icon name={Icons.answer} size={16} className="mr-1" aria-hidden />
             Answer
           </Button>
         )}
@@ -107,7 +109,7 @@ export function DoubtQueuePage() {
           ))
         ) : !currentData?.doubts.length ? (
           <div className="text-center py-16 bg-white rounded-xl border border-ink/8">
-            <MessageSquare size={36} className="text-ink/10 mx-auto mb-3" />
+            <Icon name={Icons.empty} size={36} className="text-ink/10 mx-auto mb-3 block" aria-hidden />
             <p className="font-body text-ink-3 text-sm">
               No {tab} doubts
             </p>
@@ -148,6 +150,7 @@ export function DoubtQueuePage() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setSelectedDoubt(null)}>
+                <Icon name={Icons.close} size={16} className="mr-1" aria-hidden />
                 Cancel
               </Button>
               <Button

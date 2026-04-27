@@ -1,5 +1,6 @@
 import { useDropzone } from "react-dropzone";
-import { UploadCloud } from "lucide-react";
+import { Icon } from "./Icon";
+import { Icons } from "../../lib/icons";
 import { clsx } from "clsx";
 
 interface FileUploadProps {
@@ -25,7 +26,7 @@ export function FileUpload({ onFile, accept = { "application/pdf": [".pdf"] }, l
       )}
     >
       <input {...getInputProps()} />
-      <UploadCloud size={32} className="mx-auto text-ink-3 mb-3" />
+      <Icon name={Icons.upload} size={32} className="mx-auto text-ink-3 mb-3 block" aria-hidden />
       {selectedFile ? (
         <p className="text-sm font-semibold text-teal">{selectedFile.name}</p>
       ) : (

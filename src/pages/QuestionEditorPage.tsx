@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ChevronRight, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useAdminSubjects, useAdminChapters } from "../hooks/useContent";
 import { useAdminTests, useCreateTest, usePublishTest } from "../hooks/useTests";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Icon } from "../components/ui/Icon";
+import { Icons } from "../lib/icons";
 import type { ContentChapter } from "../types";
 
 // ── Question form type ────────────────────────────────────────────────────────
@@ -48,8 +49,12 @@ function QuestionDraftCard({
     <div className="bg-bg rounded-xl border border-ink/8 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="font-display font-bold text-sm text-ink">Q{index + 1}</span>
-        <button onClick={onRemove} className="p-1 rounded hover:bg-rose/10 transition-colors">
-          <Trash2 size={14} className="text-rose" />
+        <button
+          onClick={onRemove}
+          className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-rose/10 transition-colors"
+          aria-label={`Remove question ${index + 1}`}
+        >
+          <Icon name={Icons.delete} size={18} className="text-rose" aria-hidden />
         </button>
       </div>
       <textarea
@@ -72,13 +77,18 @@ function QuestionDraftCard({
             <button
               type="button"
               onClick={() => onChange({ ...q, correct_answer: oi })}
-              className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center text-xs font-bold transition-colors ${
+              className={`w-7 h-7 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                 q.correct_answer === oi
                   ? "border-teal bg-teal text-white"
                   : "border-ink/20 text-ink-3 hover:border-teal/40"
               }`}
+              aria-label={`Mark option ${LABELS[oi]} as correct`}
             >
-              {LABELS[oi]}
+              {q.correct_answer === oi ? (
+                <Icon name={Icons.check} size={16} aria-hidden />
+              ) : (
+                <span className="text-xs font-bold">{LABELS[oi]}</span>
+              )}
             </button>
             <input
               type="text"
@@ -184,7 +194,7 @@ function CreateTestModal({
             Questions ({questions.length}) · {totalMarks} marks total
           </p>
           <Button size="sm" variant="secondary" onClick={addQuestion}>
-            <Plus size={14} />
+            <Icon name={Icons.add} size={16} className="mr-1" aria-hidden />
             Add Question
           </Button>
         </div>
@@ -238,7 +248,7 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
         <div className="flex flex-col items-center justify-center py-16 bg-bg rounded-xl border border-ink/8">
           <p className="text-ink-3 text-sm font-body mb-4">No test for this chapter yet.</p>
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
+            <Icon name={Icons.add} size={18} className="mr-1.5" aria-hidden />
             Create Test
           </Button>
         </div>
@@ -264,12 +274,12 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
             >
               {test.is_published ? (
                 <>
-                  <EyeOff size={14} />
+                  <Icon name={Icons.visibilityOff} size={16} className="mr-1" aria-hidden />
                   Unpublish
                 </>
               ) : (
                 <>
-                  <Eye size={14} />
+                  <Icon name={Icons.visibility} size={16} className="mr-1" aria-hidden />
                   Publish
                 </>
               )}
@@ -333,7 +343,7 @@ export function QuestionEditorPage() {
                   }`}
                 >
                   <span className="flex-1 truncate">{subject.name}</span>
-                  <ChevronRight size={14} className="opacity-40 flex-shrink-0" />
+                  <Icon name={Icons.forward} size={16} className="opacity-40 flex-shrink-0" aria-hidden />
                 </button>
               ))
             )}

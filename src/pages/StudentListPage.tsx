@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
 import { useStudents } from "../hooks/useStudents";
 import { DataTable } from "../components/ui/DataTable";
 import { Badge } from "../components/ui/Badge";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Icon } from "../components/ui/Icon";
+import { Icons } from "../lib/icons";
 import type { StudentRow } from "../types";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -91,7 +92,12 @@ export function StudentListPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+          <Icon
+            name={Icons.search}
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
+            aria-hidden
+          />
           <input
             type="text"
             placeholder="Search name / phone / email"

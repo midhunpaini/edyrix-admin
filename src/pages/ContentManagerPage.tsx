@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ChevronRight, Plus, Eye, EyeOff } from "lucide-react";
 import {
   useAdminSubjects,
   useAdminChapters,
@@ -12,6 +11,8 @@ import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { FileUpload } from "../components/ui/FileUpload";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Icon } from "../components/ui/Icon";
+import { Icons } from "../lib/icons";
 import api from "../api/axios";
 import type { ContentChapter, ContentLesson } from "../types";
 
@@ -218,13 +219,13 @@ function LessonRow({ lesson }: { lesson: ContentLesson }) {
       <button
         onClick={togglePublish}
         disabled={toggling}
-        className="p-1.5 rounded-lg hover:bg-ink/5 transition-colors"
-        title={lesson.is_published ? "Unpublish" : "Publish"}
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-ink/5 transition-colors"
+        aria-label={lesson.is_published ? "Unpublish lesson" : "Publish lesson"}
       >
         {lesson.is_published ? (
-          <Eye size={16} className="text-teal" />
+          <Icon name={Icons.visibility} size={18} className="text-teal" aria-hidden />
         ) : (
-          <EyeOff size={16} className="text-ink-3" />
+          <Icon name={Icons.visibilityOff} size={18} className="text-ink-3" aria-hidden />
         )}
       </button>
     </div>
@@ -249,11 +250,12 @@ function LessonsPanel({ chapter }: { chapter: ContentChapter }) {
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={() => setNotesOpen(true)}>
+            <Icon name={Icons.upload} size={16} className="mr-1" aria-hidden />
             Upload Notes
           </Button>
           <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus size={14} />
-            Lesson
+            <Icon name={Icons.add} size={16} className="mr-1" aria-hidden />
+            Add Lesson
           </Button>
         </div>
       </div>
@@ -336,7 +338,7 @@ export function ContentManagerPage() {
                   }`}
                 >
                   <span className="flex-1 truncate">{subject.name}</span>
-                  <ChevronRight size={14} className="flex-shrink-0 opacity-40" />
+                  <Icon name={Icons.forward} size={16} className="flex-shrink-0 opacity-40" aria-hidden />
                 </button>
               ))
             )}
@@ -377,7 +379,7 @@ export function ContentManagerPage() {
                   </span>
                   <span className="flex-1 truncate">{chapter.title}</span>
                   {!chapter.is_published && (
-                    <EyeOff size={12} className="flex-shrink-0 text-ink-3" />
+                    <Icon name={Icons.visibilityOff} size={16} className="flex-shrink-0 text-ink-3" aria-hidden />
                   )}
                 </button>
               ))

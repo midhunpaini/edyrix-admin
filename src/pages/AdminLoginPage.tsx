@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { Icon } from "../components/ui/Icon";
+import { Icons } from "../lib/icons";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -92,7 +93,7 @@ export function AdminLoginPage() {
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <Icon name={showPassword ? Icons.visibilityOff : Icons.visibility} size={16} aria-hidden />
                 </button>
               </div>
               {errors.password && (

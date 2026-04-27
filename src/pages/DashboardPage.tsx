@@ -1,7 +1,7 @@
-import { AlertCircle, IndianRupee, TrendingUp, Users } from "lucide-react";
 import { useDashboardStats } from "../hooks/useDashboard";
 import { StatCard } from "../components/ui/StatCard";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Icons } from "../lib/icons";
 
 function RevenueChart({ data }: { data: { date: string; amount_paise: number }[] }) {
   if (!data.length) return null;
@@ -76,25 +76,25 @@ export function DashboardPage() {
             <StatCard
               label="Total Students"
               value={stats?.total_students.toLocaleString("en-IN") ?? "—"}
-              icon={Users}
+              iconName={Icons.users}
               color="teal"
             />
             <StatCard
               label="Active Subscriptions"
               value={stats?.active_subscriptions.toLocaleString("en-IN") ?? "—"}
-              icon={TrendingUp}
+              iconName={Icons.growth}
               color="forest"
             />
             <StatCard
               label="MRR"
               value={stats ? formatRupees(stats.mrr_paise) : "—"}
-              icon={IndianRupee}
+              iconName={Icons.revenue}
               color="amber"
             />
             <StatCard
               label="Pending Doubts"
               value={stats?.pending_doubts ?? "—"}
-              icon={AlertCircle}
+              iconName={Icons.warning}
               color={stats?.pending_doubts ? "rose" : "teal"}
             />
           </>

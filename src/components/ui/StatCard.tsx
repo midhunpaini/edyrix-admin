@@ -1,15 +1,15 @@
 import { clsx } from "clsx";
-import type { LucideIcon } from "lucide-react";
+import { Icon } from "./Icon";
 
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: LucideIcon;
+  iconName: string;
   trend?: { value: number; label: string };
   color?: "teal" | "amber" | "forest" | "rose";
 }
 
-export function StatCard({ label, value, icon: Icon, trend, color = "teal" }: StatCardProps) {
+export function StatCard({ label, value, iconName, trend, color = "teal" }: StatCardProps) {
   return (
     <div className="bg-white rounded-xl border border-ink/8 shadow-sm p-5">
       <div className="flex items-start justify-between">
@@ -28,12 +28,17 @@ export function StatCard({ label, value, icon: Icon, trend, color = "teal" }: St
           "bg-forest/10": color === "forest",
           "bg-rose/10": color === "rose",
         })}>
-          <Icon size={20} className={clsx({
-            "text-teal": color === "teal",
-            "text-amber-dark": color === "amber",
-            "text-forest": color === "forest",
-            "text-rose": color === "rose",
-          })} />
+          <Icon
+            name={iconName}
+            size={20}
+            aria-hidden
+            className={clsx({
+              "text-teal": color === "teal",
+              "text-amber-dark": color === "amber",
+              "text-forest": color === "forest",
+              "text-rose": color === "rose",
+            })}
+          />
         </div>
       </div>
     </div>
