@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useAdminSubjects, useAdminChapters } from "../hooks/useContent";
-import { useAdminTests, useCreateTest, usePublishTest } from "../hooks/useTests";
+import { useAdminTests, useCreateTest, useUpdateTest, usePublishTest } from "../hooks/useTests";
+import { parseQuestionsFile, downloadTemplate, type ParsedQuestion, type ParseError } from "../lib/bulkParse";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Skeleton } from "../components/ui/Skeleton";
 import { Icon } from "../components/ui/Icon";
 import { Icons } from "../lib/icons";
-import type { ContentChapter } from "../types";
+import type { AdminTest, ContentChapter } from "../types";
 
 // ── Question form type ────────────────────────────────────────────────────────
 
@@ -228,12 +229,368 @@ function CreateTestModal({
   );
 }
 
+// ── Bulk Upload Test Modal ────────────────────────────────────────────────────
+
+const LABELS = ["A", "B", "C", "D"];
+
+function BulkUploadTestModal({
+  open,
+  chapter,
+  existingTest,
+  onClose,
+}: {
+  open: boolean;
+  chapter: ContentChapter;
+  existingTest: AdminTest | undefined;
+  onClose: () => void;
+}) {
+  const createTest = useCreateTest();
+  const updateTest = useUpdateTest();
+  const [rows, setRows] = useState<ParsedQuestion[]>([]);
+  const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
+  const [parseLoading, setParseLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const [title, setTitle] = useState(existingTest?.title ?? `${chapter.title} — Test`);
+  const [durationMinutes, setDurationMinutes] = useState(
+    String(existingTest?.duration_minutes ?? 30)
+  );
+
+  const totalMarks = rows.reduce((s, q) => s + q.marks, 0);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    setParseLoading(true);
+    setRows([]);
+    setParseErrors([]);
+    try {
+      const result = await parseQuestionsFile(file);
+      setRows(result.rows);
+      setParseErrors(result.errors);
+    } catch (err: any) {
+      setParseErrors([{ row: 0, message: err.message }]);
+    } finally {
+      setParseLoading(false);
+    }
+  }
+
+  function handleSubmit() {
+    if (!rows.length || !title.trim()) return;
+    const payload = {
+      title: title.trim(),
+      duration_minutes: parseInt(durationMinutes) || 30,
+      total_marks: totalMarks,
+      questions: rows.map((q) => ({
+        text: q.text,
+        text_ml: q.text_ml,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+        marks: q.marks,
+      })),
+    };
+
+    if (existingTest) {
+      updateTest.mutate({ id: existingTest.id, ...payload }, { onSuccess: onClose });
+    } else {
+      createTest.mutate(
+        { chapter_id: chapter.id, ...payload },
+        { onSuccess: onClose }
+      );
+    }
+  }
+
+  function handleClose() {
+    setRows([]);
+    setParseErrors([]);
+    setFileName("");
+    onClose();
+  }
+
+  const isPending = createTest.isPending || updateTest.isPending;
+  const mutationError = createTest.error || updateTest.error;
+
+  return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={existingTest ? `Replace Test Questions — ${chapter.title}` : `Bulk Create Test — ${chapter.title}`}
+      size="lg"
+    >
+      <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        {/* Template download */}
+        <div className="flex items-center justify-between p-3 bg-bg rounded-lg border border-ink/8">
+          <div>
+            <p className="font-display font-semibold text-sm text-ink">Download template</p>
+            <p className="text-xs text-ink-3 font-body mt-0.5">
+              Columns: question_text, question_text_ml, option_a–d, correct_answer (A–D or 0–3), explanation, marks
+            </p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => downloadTemplate("questions")}>
+            <Icon name={Icons.upload} size={16} className="mr-1 rotate-180" aria-hidden />
+            Template
+          </Button>
+        </div>
+
+        {existingTest && (
+          <div className="p-3 bg-amber/10 rounded-lg border border-amber/20">
+            <p className="text-xs font-body text-amber font-semibold">
+              This will replace all {existingTest.questions.length} existing questions in "{existingTest.title}".
+            </p>
+          </div>
+        )}
+
+        {/* Test meta */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-semibold font-body text-ink mb-1">Test Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-ink/20 text-sm font-body text-ink focus:outline-none focus:border-teal"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold font-body text-ink mb-1">Duration (minutes)</label>
+            <input
+              type="number"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-ink/20 text-sm font-body text-ink focus:outline-none focus:border-teal"
+            />
+          </div>
+        </div>
+
+        {/* File picker */}
+        <div>
+          <label className="block text-sm font-semibold font-body text-ink mb-1">
+            Upload CSV or Excel file
+          </label>
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleFile}
+            className="block w-full text-sm text-ink-3 font-body
+              file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+              file:text-sm file:font-semibold file:bg-teal/10 file:text-teal
+              hover:file:bg-teal/20 cursor-pointer"
+          />
+          {fileName && !parseLoading && (
+            <p className="text-xs text-ink-3 font-body mt-1">{fileName}</p>
+          )}
+          {parseLoading && <p className="text-xs text-ink-3 font-body mt-1">Parsing file…</p>}
+        </div>
+
+        {/* Parse errors */}
+        {parseErrors.length > 0 && (
+          <div className="p-3 bg-rose/5 rounded-lg border border-rose/20 space-y-1">
+            {parseErrors.slice(0, 5).map((e, i) => (
+              <p key={i} className="text-xs font-body text-rose">
+                {e.row > 0 ? `Row ${e.row}: ` : ""}{e.message}
+              </p>
+            ))}
+            {parseErrors.length > 5 && (
+              <p className="text-xs font-body text-rose">…and {parseErrors.length - 5} more errors</p>
+            )}
+          </div>
+        )}
+
+        {/* Preview */}
+        {rows.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold font-body text-ink">
+              Preview — {rows.length} question{rows.length !== 1 ? "s" : ""} · {totalMarks} marks total
+            </p>
+            {rows.slice(0, 5).map((q, i) => (
+              <div key={i} className="bg-bg rounded-lg border border-ink/8 p-3 space-y-2">
+                <p className="text-sm font-body text-ink">
+                  <span className="font-bold text-teal mr-2">Q{i + 1}</span>
+                  {q.text}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5 pl-6">
+                  {q.options.map((opt, oi) => (
+                    <div
+                      key={oi}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-body ${
+                        q.correct_answer === oi
+                          ? "bg-teal/10 text-teal font-semibold"
+                          : "text-ink"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                        q.correct_answer === oi ? "bg-teal text-white" : "bg-ink/8 text-ink-3"
+                      }`}>
+                        {LABELS[oi]}
+                      </span>
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {rows.length > 5 && (
+              <p className="text-xs text-ink-3 font-body text-center">
+                …and {rows.length - 5} more questions
+              </p>
+            )}
+          </div>
+        )}
+
+        {mutationError && (
+          <p className="text-sm text-rose font-body">
+            {(mutationError as any)?.response?.data?.detail ?? "Failed to save test"}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-ink/8 sticky bottom-0 bg-white py-3">
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button
+            disabled={!rows.length || !title.trim() || isPending}
+            loading={isPending}
+            onClick={handleSubmit}
+          >
+            {existingTest ? "Replace Questions" : `Create Test (${rows.length} questions)`}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Edit Test Modal ───────────────────────────────────────────────────────────
+
+function EditTestModal({
+  open,
+  test,
+  onClose,
+}: {
+  open: boolean;
+  test: AdminTest;
+  onClose: () => void;
+}) {
+  const updateTest = useUpdateTest();
+  const [title, setTitle] = useState(test.title);
+  const [durationMinutes, setDurationMinutes] = useState(String(test.duration_minutes));
+  const [questions, setQuestions] = useState<QuestionDraft[]>(
+    test.questions.map((q) => ({
+      text: q.text,
+      text_ml: q.text_ml,
+      options: q.options as [string, string, string, string],
+      correct_answer: q.correct_answer,
+      explanation: q.explanation,
+      marks: q.marks,
+    }))
+  );
+
+  const totalMarks = questions.reduce((s, q) => s + q.marks, 0);
+
+  function handleSubmit() {
+    if (!title.trim() || questions.length === 0) return;
+    const valid = questions.every(
+      (q) => q.text.trim() && q.options.every((o) => o.trim())
+    );
+    if (!valid) return;
+
+    updateTest.mutate(
+      {
+        id: test.id,
+        title: title.trim(),
+        duration_minutes: parseInt(durationMinutes) || 30,
+        total_marks: totalMarks,
+        questions: questions.map((q) => ({
+          text: q.text.trim(),
+          text_ml: q.text_ml.trim(),
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation.trim(),
+          marks: q.marks,
+        })),
+      },
+      { onSuccess: onClose }
+    );
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Edit Test — ${test.title}`} size="lg">
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-semibold font-body text-ink mb-1">Test Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-ink/20 text-sm font-body text-ink focus:outline-none focus:border-teal"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold font-body text-ink mb-1">
+              Duration (minutes)
+            </label>
+            <input
+              type="number"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-ink/20 text-sm font-body text-ink focus:outline-none focus:border-teal"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="font-display font-bold text-sm text-ink">
+            Questions ({questions.length}) · {totalMarks} marks total
+          </p>
+          <Button size="sm" variant="secondary" onClick={() => setQuestions((qs) => [...qs, emptyQuestion()])}>
+            <Icon name={Icons.add} size={16} className="mr-1" aria-hidden />
+            Add Question
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {questions.map((q, i) => (
+            <QuestionDraftCard
+              key={i}
+              q={q}
+              index={i}
+              onChange={(updated) =>
+                setQuestions((qs) => qs.map((x, xi) => (xi === i ? updated : x)))
+              }
+              onRemove={() => setQuestions((qs) => qs.filter((_, xi) => xi !== i))}
+            />
+          ))}
+        </div>
+
+        {updateTest.error && (
+          <p className="text-sm text-rose font-body">
+            {(updateTest.error as any)?.response?.data?.detail ?? "Failed to update test"}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-ink/8 sticky bottom-0 bg-white py-3">
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
+            disabled={!title.trim() || questions.length === 0 || updateTest.isPending}
+            loading={updateTest.isPending}
+            onClick={handleSubmit}
+          >
+            Save Changes
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ── Chapter Test Panel ────────────────────────────────────────────────────────
 
 function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
   const { data: test, isLoading } = useAdminTests(chapter.id);
   const publishTest = usePublishTest();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   return (
     <div className="p-6">
@@ -245,46 +602,128 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
       {isLoading ? (
         <Skeleton className="h-32 rounded-xl" />
       ) : !test ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-bg rounded-xl border border-ink/8">
-          <p className="text-ink-3 text-sm font-body mb-4">No test for this chapter yet.</p>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Icon name={Icons.add} size={18} className="mr-1.5" aria-hidden />
-            Create Test
-          </Button>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-ink/8 shadow-sm p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-display font-bold text-base text-ink">{test.title}</p>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="font-body text-sm text-ink-3">
-                  {test.duration_minutes} min · {test.total_marks} marks
-                </span>
-                <Badge variant={test.is_published ? "forest" : "gray"}>
-                  {test.is_published ? "Published" : "Draft"}
-                </Badge>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => publishTest.mutate(test.id)}
-              disabled={publishTest.isPending}
-            >
-              {test.is_published ? (
-                <>
-                  <Icon name={Icons.visibilityOff} size={16} className="mr-1" aria-hidden />
-                  Unpublish
-                </>
-              ) : (
-                <>
-                  <Icon name={Icons.visibility} size={16} className="mr-1" aria-hidden />
-                  Publish
-                </>
-              )}
+        <div className="flex flex-col items-center justify-center py-16 bg-bg rounded-xl border border-ink/8 gap-3">
+          <p className="text-ink-3 text-sm font-body">No test for this chapter yet.</p>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setBulkOpen(true)}>
+              <Icon name={Icons.upload} size={18} className="mr-1.5" aria-hidden />
+              Bulk Upload
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Icon name={Icons.add} size={18} className="mr-1.5" aria-hidden />
+              Create Test
             </Button>
           </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Test header */}
+          <div className="bg-white rounded-xl border border-ink/8 shadow-sm p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display font-bold text-base text-ink">{test.title}</p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="font-body text-sm text-ink-3">
+                    {test.duration_minutes} min · {test.total_marks} marks · {test.questions.length} questions
+                  </span>
+                  <Badge variant={test.is_published ? "forest" : "gray"}>
+                    {test.is_published ? "Published" : "Draft"}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setBulkOpen(true)}
+                >
+                  <Icon name={Icons.upload} size={16} className="mr-1" aria-hidden />
+                  Bulk
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setEditOpen(true)}
+                >
+                  <Icon name={Icons.edit} size={16} className="mr-1" aria-hidden />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => publishTest.mutate(test.id)}
+                  disabled={publishTest.isPending}
+                >
+                  {test.is_published ? (
+                    <>
+                      <Icon name={Icons.visibilityOff} size={16} className="mr-1" aria-hidden />
+                      Unpublish
+                    </>
+                  ) : (
+                    <>
+                      <Icon name={Icons.visibility} size={16} className="mr-1" aria-hidden />
+                      Publish
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Questions list */}
+          {test.questions.length > 0 && (
+            <div className="space-y-3">
+              {test.questions.map((q, i) => {
+                const LABELS = ["A", "B", "C", "D"];
+                return (
+                  <div key={q.id} className="bg-bg rounded-xl border border-ink/8 p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 flex-1">
+                        <span className="mt-0.5 w-6 h-6 rounded-full bg-teal/10 text-teal flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="font-body text-sm text-ink leading-relaxed">{q.text}</p>
+                      </div>
+                      <span className="text-xs font-semibold font-body text-ink-3 whitespace-nowrap flex-shrink-0">
+                        {q.marks} {q.marks === 1 ? "mark" : "marks"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pl-8">
+                      {q.options.map((opt, oi) => (
+                        <div
+                          key={oi}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-body ${
+                            q.correct_answer === oi
+                              ? "border-teal bg-teal/8 text-teal font-semibold"
+                              : "border-ink/10 text-ink"
+                          }`}
+                        >
+                          <span
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                              q.correct_answer === oi
+                                ? "bg-teal text-white"
+                                : "bg-ink/8 text-ink-3"
+                            }`}
+                          >
+                            {LABELS[oi]}
+                          </span>
+                          <span className="truncate">{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {q.explanation && (
+                      <p className="pl-8 text-xs font-body text-ink-3 italic">
+                        <span className="not-italic font-semibold text-amber">Explanation:</span>{" "}
+                        {q.explanation}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -292,6 +731,19 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
         open={createOpen}
         chapter={chapter}
         onClose={() => setCreateOpen(false)}
+      />
+      {test && editOpen && (
+        <EditTestModal
+          open={editOpen}
+          test={test}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
+      <BulkUploadTestModal
+        open={bulkOpen}
+        chapter={chapter}
+        existingTest={test}
+        onClose={() => setBulkOpen(false)}
       />
     </div>
   );

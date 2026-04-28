@@ -128,10 +128,13 @@ export interface AdminQuestion {
 
 export interface AdminTest {
   id: string;
+  subject_id: string;
   chapter_id: string;
+  lesson_id: string | null;
   title: string;
   duration_minutes: number;
   total_marks: number;
+  questions: AdminQuestion[];
   is_published: boolean;
   created_at: string;
 }
