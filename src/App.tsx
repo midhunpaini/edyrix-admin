@@ -6,7 +6,10 @@ import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { ContentManagerPage } from "./pages/ContentManagerPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DoubtQueuePage } from "./pages/DoubtQueuePage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { QuestionEditorPage } from "./pages/QuestionEditorPage";
+import { RevenuePage } from "./pages/RevenuePage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { StudentListPage } from "./pages/StudentListPage";
 import { isAdminUser, useAuthStore } from "./store/authStore";
 
@@ -44,6 +47,9 @@ export default function App() {
           <Route path="students" element={<StudentListPage />} />
           <Route path="tests" element={<QuestionEditorPage />} />
           <Route path="doubts" element={<DoubtQueuePage />} />
+          <Route path="revenue" element={<RevenuePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

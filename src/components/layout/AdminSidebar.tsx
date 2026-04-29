@@ -97,7 +97,7 @@ export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="flex h-screen bg-overflow-hidden">
       <div className="hidden sidebar:flex sidebar:flex-shrink-0">
         <Sidebar />
       </div>

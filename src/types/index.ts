@@ -43,6 +43,24 @@ export interface AdminUser {
   created_at: string;
 }
 
+export interface StudentDetail {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  current_class: number | null;
+  medium: string;
+  is_suspended: boolean;
+  suspended_reason: string | null;
+  subscription_status: "active" | "trial" | "free";
+  joined_at: string;
+  stats: { videos: number; tests: number; avg_score: number; streak: number };
+  subject_progress: { subject: string; pct: number }[];
+  payment_history: { plan_name: string; amount_paise: number; started_at: string; expires_at: string | null; status: string }[];
+  recent_activity: { type: string; title: string; score?: number; timestamp: string }[];
+}
+
 export interface RevenueDay {
   date: string;
   amount_paise: number;
@@ -55,6 +73,15 @@ export interface DashboardStats {
   new_signups_today: number;
   pending_doubts: number;
   revenue_last_30_days: RevenueDay[];
+  trial_users: number;
+  trial_conversion_rate: number;
+  churn_this_month: number;
+  churn_rate_pct: number;
+  arr_paise: number;
+  revenue_by_plan: { plan_name: string; count: number; revenue_paise: number }[];
+  top_lessons: { id: string; title: string; views: number; completion_pct: number }[];
+  low_completion_lessons: { id: string; title: string; views: number; completion_pct: number }[];
+  subject_engagement: { subject: string; active_students: number; avg_completion_pct: number }[];
 }
 
 export interface StudentRow {
@@ -63,6 +90,7 @@ export interface StudentRow {
   phone: string | null;
   email: string | null;
   current_class: number | null;
+  is_suspended: boolean;
   subscription_status: "active" | "trial" | "free";
   joined_at: string;
 }
@@ -109,15 +137,23 @@ export interface ContentLesson {
 export interface AdminDoubt {
   id: string;
   student_name: string;
+  student_class: number | null;
   question_text: string;
   chapter_id: string | null;
   lesson_id: string | null;
-  status: "pending" | "answered";
+  subject_name: string | null;
+  chapter_title: string | null;
+  image_url: string | null;
+  assigned_to_id: string | null;
+  assigned_to_name: string | null;
+  hours_pending: number | null;
+  sla_breached: boolean;
+  status: "pending" | "answered" | "closed";
   created_at: string;
 }
 
 export interface AdminQuestion {
-  id: string;
+  id?: string;
   text: string;
   text_ml: string;
   options: string[];

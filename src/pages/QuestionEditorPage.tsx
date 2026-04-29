@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAdminSubjects, useAdminChapters } from "../hooks/useContent";
-import { useAdminTests, useCreateTest, useUpdateTest, usePublishTest } from "../hooks/useTests";
+import { useAdminTests, useCreateTest, useUpdateTest, usePublishTest, useDuplicateTest, useTestAnalytics } from "../hooks/useTests";
 import { parseQuestionsFile, downloadTemplate, type ParsedQuestion, type ParseError } from "../lib/bulkParse";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -583,14 +584,146 @@ function EditTestModal({
   );
 }
 
+// ── Analytics Drawer ──────────────────────────────────────────────────────────
+
+function AnalyticsDrawer({ testId, testTitle, open, onClose }: {
+  testId: string | null;
+  testTitle: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { data: analytics, isLoading } = useTestAnalytics(testId ?? undefined);
+
+  function correctRateColor(rate: number) {
+    if (rate >= 70) return "#16a34a";
+    if (rate >= 40) return "#f59e0b";
+    return "#e11d48";
+  }
+
+  return (
+    <div
+      className={`fixed inset-0 z-50 transition-opacity ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      aria-hidden={!open}
+    >
+      <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onClose} />
+      <div className={`absolute right-0 top-0 h-full w-full max-w-[480px] bg-white shadow-2xl transition-transform overflow-y-auto ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ink/8 sticky top-0 bg-white z-10">
+          <h3 className="font-display font-bold text-lg text-ink">Test Analytics</h3>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-ink/5" aria-label="Close">
+            <Icon name={Icons.close} size={20} className="text-ink-3" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div>
+            <p className="font-body text-sm text-ink-3 truncate">{testTitle}</p>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+            </div>
+          ) : !analytics ? null : (
+            <>
+              {/* Summary stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-bg rounded-xl p-3 text-center">
+                  <p className="text-xl font-display font-bold text-ink">{analytics.attempt_count}</p>
+                  <p className="text-xs text-ink-3 font-body">Attempts</p>
+                </div>
+                <div className="bg-bg rounded-xl p-3 text-center">
+                  <p className="text-xl font-display font-bold text-teal">{analytics.avg_score_pct}%</p>
+                  <p className="text-xs text-ink-3 font-body">Avg Score</p>
+                </div>
+                <div className="bg-bg rounded-xl p-3 text-center">
+                  <p className={`text-xl font-display font-bold ${analytics.pass_rate >= 50 ? "text-forest" : "text-rose"}`}>
+                    {analytics.pass_rate}%
+                  </p>
+                  <p className="text-xs text-ink-3 font-body">Pass Rate</p>
+                </div>
+              </div>
+
+              {/* Per-question breakdown */}
+              {analytics.question_analytics.length > 0 && (
+                <div>
+                  <h4 className="font-display font-bold text-sm text-ink mb-4">Question Breakdown</h4>
+                  <div className="space-y-5">
+                    {analytics.question_analytics.map((q) => {
+                      const totalAnswers = Object.values(q.option_distribution).reduce((s, v) => s + v, 0);
+                      return (
+                        <div key={q.question_index} className="border border-ink/8 rounded-xl p-4 space-y-3">
+                          <p className="font-body text-sm text-ink">
+                            <span className="font-bold text-teal mr-2">Q{q.question_index + 1}.</span>
+                            {q.question_text.length > 120 ? q.question_text.slice(0, 120) + "…" : q.question_text}
+                          </p>
+
+                          {/* Correct rate bar */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs font-body mb-1">
+                              <span className="text-ink-3">Correct rate</span>
+                              <span className="font-bold" style={{ color: correctRateColor(q.correct_rate) }}>
+                                {q.correct_rate}%
+                              </span>
+                            </div>
+                            <div className="h-2 bg-ink/5 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${q.correct_rate}%`, backgroundColor: correctRateColor(q.correct_rate) }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Option distribution */}
+                          <div className="space-y-1.5">
+                            {Object.entries(q.option_distribution).map(([opt, count]) => {
+                              const pct = totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0;
+                              const isCorrect = opt === q.correct_option;
+                              return (
+                                <div key={opt} className="flex items-center gap-2">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                    isCorrect ? "bg-teal text-white" : "bg-ink/8 text-ink-3"
+                                  }`}>
+                                    {opt}
+                                  </span>
+                                  <div className="flex-1 h-1.5 bg-ink/5 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full"
+                                      style={{ width: `${pct}%`, backgroundColor: isCorrect ? "#0D6E6E" : "#9ca3af" }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-ink-3 w-8 text-right">{count}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {analytics.attempt_count === 0 && (
+                <p className="text-sm text-ink-3 font-body text-center py-8">No attempts yet</p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Chapter Test Panel ────────────────────────────────────────────────────────
 
 function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
   const { data: test, isLoading } = useAdminTests(chapter.id);
   const publishTest = usePublishTest();
+  const duplicateTest = useDuplicateTest();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   return (
     <div className="p-6">
@@ -622,7 +755,7 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-display font-bold text-base text-ink">{test.title}</p>
-                <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
                   <span className="font-body text-sm text-ink-3">
                     {test.duration_minutes} min · {test.total_marks} marks · {test.questions.length} questions
                   </span>
@@ -631,7 +764,27 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
                   </Badge>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setAnalyticsOpen(true)}
+                >
+                  <Icon name={Icons.rank} size={16} className="mr-1" aria-hidden />
+                  Analytics
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={duplicateTest.isPending}
+                  onClick={() => duplicateTest.mutate(test.id, {
+                    onSuccess: () => toast.success("Test duplicated"),
+                    onError: () => toast.error("Duplicate failed"),
+                  })}
+                >
+                  <Icon name={Icons.copy} size={16} className="mr-1" aria-hidden />
+                  Duplicate
+                </Button>
                 <Button
                   size="sm"
                   variant="secondary"
@@ -744,6 +897,12 @@ function ChapterTestPanel({ chapter }: { chapter: ContentChapter }) {
         chapter={chapter}
         existingTest={test}
         onClose={() => setBulkOpen(false)}
+      />
+      <AnalyticsDrawer
+        testId={test?.id ?? null}
+        testTitle={test?.title ?? ""}
+        open={analyticsOpen}
+        onClose={() => setAnalyticsOpen(false)}
       />
     </div>
   );
