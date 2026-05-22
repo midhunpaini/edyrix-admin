@@ -28,7 +28,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       <div className="px-5 py-5 border-b border-ink/8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display font-bold text-xl tracking-tight text-teal">Edyrix</h1>
+            <h1 className="font-display font-bold text-xl tracking-tight text-teal">Studyvek</h1>
             <p className="text-ink-3 text-xs font-body mt-0.5">Admin Portal</p>
           </div>
           {onClose && (

@@ -50,7 +50,7 @@ export function DashboardPage() {
     <div>
       <div className="mb-6">
         <h2 className="font-display text-2xl font-bold text-ink">Dashboard</h2>
-        <p className="text-ink-3 text-sm font-body mt-0.5">Overview of Edyrix platform</p>
+        <p className="text-ink-3 text-sm font-body mt-0.5">Overview of Studyvek platform</p>
       </div>
 
       {/* Stat cards */}

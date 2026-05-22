@@ -128,7 +128,7 @@ export function NotificationsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-ink-3 font-body">Edyrix · now</p>
+                    <p className="text-xs font-semibold text-ink-3 font-body">Studyvek · now</p>
                   </div>
                   <p className="text-sm font-semibold font-body text-ink mt-0.5 truncate">
                     {title || "Notification title"}

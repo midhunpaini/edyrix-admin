@@ -35,7 +35,7 @@ export const useAuthStore = create<AdminAuthState>()(
       setLoading: (v) => set({ isLoading: v }),
     }),
     {
-      name: "edyrix_admin_auth",
+      name: "studyvek_admin_auth",
       partialize: (s) => ({ user: s.user, token: s.token }),
     }
   )

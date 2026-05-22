@@ -51,7 +51,7 @@ export function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-display font-bold text-teal">Edyrix</h1>
+          <h1 className="text-3xl font-display font-bold text-teal">Studyvek</h1>
           <p className="text-ink-3 text-sm mt-1 font-body">Admin Portal</p>
         </div>
 
@@ -68,7 +68,7 @@ export function AdminLoginPage() {
                 {...register("email")}
                 type="email"
                 autoComplete="email"
-                placeholder="admin@edyrix.in"
+                placeholder="admin@studyvek.in"
                 className="w-full h-11 px-3 rounded-lg border border-ink/15 font-body text-sm text-ink bg-white placeholder:text-ink-3 focus:outline-none focus:border-teal transition-colors"
               />
               {errors.email && (
@@ -118,7 +118,7 @@ export function AdminLoginPage() {
         <p className="text-center text-xs text-ink-3 mt-6 font-body">
           Student? Go to{" "}
           <a href={import.meta.env.VITE_STUDENT_APP_URL ?? "/"} className="text-teal underline">
-            edyrix.in
+            studyvek.in
           </a>
         </p>
       </div>
