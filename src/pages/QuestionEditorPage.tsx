@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAdminSubjects, useAdminChapters } from "../hooks/useContent";
 import { useAdminTests, useCreateTest, useUpdateTest, usePublishTest, useDuplicateTest, useTestAnalytics } from "../hooks/useTests";
+import { useTopics } from "../hooks/useTopics";
 import { parseQuestionsFile, downloadTemplate, type ParsedQuestion, type ParseError } from "../lib/bulkParse";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -9,7 +10,7 @@ import { Modal } from "../components/ui/Modal";
 import { Skeleton } from "../components/ui/Skeleton";
 import { Icon } from "../components/ui/Icon";
 import { Icons } from "../lib/icons";
-import type { AdminTest, ContentChapter } from "../types";
+import type { AdminTest, ContentChapter, Topic } from "../types";
 
 // ── Question form type ────────────────────────────────────────────────────────
 
@@ -20,6 +21,7 @@ interface QuestionDraft {
   correct_answer: number;
   explanation: string;
   marks: number;
+  topic_id: string | null;
 }
 
 function emptyQuestion(): QuestionDraft {
@@ -30,6 +32,7 @@ function emptyQuestion(): QuestionDraft {
     correct_answer: 0,
     explanation: "",
     marks: 1,
+    topic_id: null,
   };
 }
 
@@ -38,27 +41,47 @@ function emptyQuestion(): QuestionDraft {
 function QuestionDraftCard({
   q,
   index,
+  topics,
   onChange,
   onRemove,
 }: {
   q: QuestionDraft;
   index: number;
+  topics: Topic[];
   onChange: (q: QuestionDraft) => void;
   onRemove: () => void;
 }) {
   const LABELS = ["A", "B", "C", "D"];
   return (
     <div className="bg-bg rounded-xl border border-ink/8 p-4 space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <span className="font-display font-bold text-sm text-ink">Q{index + 1}</span>
-        <button
-          onClick={onRemove}
-          className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-rose/10 transition-colors"
-          aria-label={`Remove question ${index + 1}`}
-        >
-          <Icon name={Icons.delete} size={18} className="text-rose" aria-hidden />
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={q.topic_id ?? ""}
+            onChange={(e) => onChange({ ...q, topic_id: e.target.value || null })}
+            className="h-8 px-2 rounded-lg border border-ink/20 text-xs font-body text-ink focus:outline-none focus:border-teal bg-white max-w-[180px]"
+            aria-label={`Topic for question ${index + 1}`}
+          >
+            <option value="">— No topic —</option>
+            {topics.map((t) => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
+          <button
+            onClick={onRemove}
+            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-rose/10 transition-colors"
+            aria-label={`Remove question ${index + 1}`}
+          >
+            <Icon name={Icons.delete} size={18} className="text-rose" aria-hidden />
+          </button>
+        </div>
       </div>
+      {topics.length === 0 && (
+        <p className="text-xs font-body text-amber">
+          No topics for this chapter yet — add topics in the Content tab to enable weak-area tracking.
+        </p>
+      )}
       <textarea
         rows={2}
         value={q.text}
@@ -129,6 +152,7 @@ function CreateTestModal({
   onClose: () => void;
 }) {
   const createTest = useCreateTest();
+  const { data: topics = [] } = useTopics(chapter.id);
   const [title, setTitle] = useState(`${chapter.title} — Test`);
   const [durationMinutes, setDurationMinutes] = useState("30");
   const [questions, setQuestions] = useState<QuestionDraft[]>([emptyQuestion()]);
@@ -159,6 +183,7 @@ function CreateTestModal({
           correct_answer: q.correct_answer,
           explanation: q.explanation.trim(),
           marks: q.marks,
+          topic_id: q.topic_id,
         })),
       },
       { onSuccess: onClose }
@@ -207,6 +232,7 @@ function CreateTestModal({
               key={i}
               q={q}
               index={i}
+              topics={topics}
               onChange={(updated) =>
                 setQuestions((qs) => qs.map((x, xi) => (xi === i ? updated : x)))
               }
@@ -289,6 +315,7 @@ function BulkUploadTestModal({
         correct_answer: q.correct_answer,
         explanation: q.explanation,
         marks: q.marks,
+        topic_id: null,
       })),
     };
 
@@ -472,6 +499,7 @@ function EditTestModal({
   onClose: () => void;
 }) {
   const updateTest = useUpdateTest();
+  const { data: topics = [] } = useTopics(test.chapter_id);
   const [title, setTitle] = useState(test.title);
   const [durationMinutes, setDurationMinutes] = useState(String(test.duration_minutes));
   const [questions, setQuestions] = useState<QuestionDraft[]>(
@@ -482,6 +510,7 @@ function EditTestModal({
       correct_answer: q.correct_answer,
       explanation: q.explanation,
       marks: q.marks,
+      topic_id: q.topic_id ?? null,
     }))
   );
 
@@ -507,6 +536,7 @@ function EditTestModal({
           correct_answer: q.correct_answer,
           explanation: q.explanation.trim(),
           marks: q.marks,
+          topic_id: q.topic_id,
         })),
       },
       { onSuccess: onClose }
@@ -555,6 +585,7 @@ function EditTestModal({
               key={i}
               q={q}
               index={i}
+              topics={topics}
               onChange={(updated) =>
                 setQuestions((qs) => qs.map((x, xi) => (xi === i ? updated : x)))
               }

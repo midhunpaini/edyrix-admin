@@ -11,7 +11,7 @@ function RevenueChart({ data }: { data: { date: string; amount_paise: number }[]
     <div className="bg-white rounded-xl border border-ink/8 shadow-sm p-5">
       <h3 className="font-display font-bold text-base text-ink mb-4">Revenue — Last 30 Days</h3>
       <div className="h-40">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={160}>
           <BarChart data={data}>
             <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} />
             <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 100).toLocaleString("en-IN")}`} />
@@ -182,7 +182,7 @@ export function DashboardPage() {
           <p className="text-sm text-ink-3 font-body">No data yet</p>
         ) : (
           <div className="h-40">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={160}>
               <BarChart data={stats.subject_engagement} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis dataKey="subject" type="category" tick={{ fontSize: 10 }} width={80} />

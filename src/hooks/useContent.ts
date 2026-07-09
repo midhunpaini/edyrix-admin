@@ -1,6 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import api from "../api/axios";
 import type { ContentChapter, ContentLesson, ContentSubject } from "../types";
+
+const invalidateTree = (qc: QueryClient) =>
+  qc.invalidateQueries({ queryKey: ["admin", "content-tree"] });
 
 export function useAdminSubjects() {
   return useQuery<ContentSubject[]>({
@@ -32,12 +35,10 @@ export function useCreateLesson() {
       chapter_id: string;
       title: string;
       title_ml: string;
-      youtube_video_id: string;
-      duration_seconds?: number;
       is_free?: boolean;
       order_index?: number;
     }) => api.post<ContentLesson>("/admin/lessons", data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "lessons"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "lessons"] }); invalidateTree(qc); },
   });
 }
 
@@ -46,18 +47,15 @@ export function useUpdateLesson() {
   return useMutation({
     mutationFn: ({ id, ...data }: Partial<ContentLesson> & { id: string }) =>
       api.put<ContentLesson>(`/admin/lessons/${id}`, data).then((r) => r.data),
-    onSuccess: (_result, vars) =>
-      qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }),
+    onSuccess: (_r, vars) => { qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }); invalidateTree(qc); },
   });
 }
 
 export function useDeleteLesson() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string; chapter_id: string }) =>
-      api.delete(`/admin/lessons/${id}`),
-    onSuccess: (_result, vars) =>
-      qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }),
+    mutationFn: ({ id }: { id: string; chapter_id: string }) => api.delete(`/admin/lessons/${id}`),
+    onSuccess: (_r, vars) => { qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }); invalidateTree(qc); },
   });
 }
 
@@ -65,11 +63,8 @@ export function usePublishLesson() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string; chapter_id: string }) =>
-      api
-        .patch<{ id: string; is_published: boolean }>(`/admin/lessons/${id}/publish`)
-        .then((r) => r.data),
-    onSuccess: (_result, vars) =>
-      qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }),
+      api.patch<{ id: string; is_published: boolean }>(`/admin/lessons/${id}/publish`).then((r) => r.data),
+    onSuccess: (_r, vars) => { qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }); invalidateTree(qc); },
   });
 }
 
@@ -86,12 +81,8 @@ export function useBulkCreateLessons() {
         is_free?: boolean;
         order_index?: number;
       }[];
-    }) =>
-      api
-        .post<{ created: number; errors: string[] }>("/admin/lessons/bulk", data)
-        .then((r) => r.data),
-    onSuccess: (_result, vars) =>
-      qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }),
+    }) => api.post<{ created: number; errors: string[] }>("/admin/lessons/bulk", data).then((r) => r.data),
+    onSuccess: (_r, vars) => { qc.invalidateQueries({ queryKey: ["admin", "lessons", vars.chapter_id] }); invalidateTree(qc); },
   });
 }
 
@@ -99,6 +90,7 @@ export function useCreateSubject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: {
+      board_id: string;
       name: string;
       name_ml: string;
       slug: string;
@@ -108,7 +100,7 @@ export function useCreateSubject() {
       monthly_price_paise: number;
       order_index?: number;
     }) => api.post<ContentSubject>("/admin/subjects", data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "subjects"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "subjects"] }); invalidateTree(qc); },
   });
 }
 
@@ -123,9 +115,7 @@ export function useCreateChapter() {
       description?: string;
       order_index?: number;
     }) => api.post<ContentChapter>("/admin/chapters", data).then((r) => r.data),
-    onSuccess: (_result, vars) => {
-      qc.invalidateQueries({ queryKey: ["admin", "chapters", vars.subject_id] });
-    },
+    onSuccess: (_r, vars) => { qc.invalidateQueries({ queryKey: ["admin", "chapters", vars.subject_id] }); invalidateTree(qc); },
   });
 }
 
@@ -134,7 +124,7 @@ export function usePublishChapter() {
   return useMutation({
     mutationFn: (id: string) =>
       api.patch<{ id: string; is_published: boolean }>(`/admin/chapters/${id}/publish`).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "chapters"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "chapters"] }); invalidateTree(qc); },
   });
 }
 

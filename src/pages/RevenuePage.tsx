@@ -133,7 +133,7 @@ export function RevenuePage() {
           <div className="h-64 flex items-center justify-center text-ink-3 text-sm font-body">No revenue data for this period</div>
         ) : (
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={256}>
               <AreaChart data={revenue.daily_breakdown}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">

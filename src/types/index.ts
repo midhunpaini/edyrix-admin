@@ -95,8 +95,17 @@ export interface StudentRow {
   joined_at: string;
 }
 
+export interface Board {
+  id: string;
+  name: string;
+  code: string;
+  display_order: number;
+  is_active: boolean;
+}
+
 export interface ContentSubject {
   id: string;
+  board_id: string;
   name: string;
   name_ml: string;
   slug: string;
@@ -126,12 +135,25 @@ export interface ContentLesson {
   chapter_id: string;
   title: string;
   title_ml: string;
-  youtube_video_id: string;
-  duration_seconds: number | null;
   is_free: boolean;
-  is_published: boolean;
-  thumbnail_url: string | null;
+  is_active: boolean;
   order_index: number;
+}
+
+export interface ContentItem {
+  id: string;
+  lesson_id: string;
+  content_type: "video" | "notes" | "test";
+  title: string;
+  title_ml: string | null;
+  order_index: number;
+  is_free: boolean;
+  is_active: boolean;
+  assessment_id: string | null;
+  youtube_video_id: string | null;
+  duration_seconds: number | null;
+  thumbnail_url: string | null;
+  timestamps_count: number;
 }
 
 export interface AdminDoubt {
@@ -160,6 +182,7 @@ export interface AdminQuestion {
   marks: number;
   correct_answer: number;
   explanation: string;
+  topic_id: string | null;
 }
 
 export interface AdminTest {
@@ -174,3 +197,84 @@ export interface AdminTest {
   is_published: boolean;
   created_at: string;
 }
+
+// ── Topics ────────────────────────────────────────────────────────────────────
+
+export interface Topic {
+  id: string;
+  chapter_id: string;
+  lesson_id: string | null;
+  title: string;
+  title_ml: string | null;
+  order_index: number;
+}
+
+// ── Content tree (admin content manager) ────────────────────────────────────────
+
+export interface TreeTopic {
+  id: string;
+  title: string;
+  order_index: number;
+}
+
+export interface TreeLesson {
+  id: string;
+  title: string;
+  is_active: boolean;
+  order_index: number;
+  topics: TreeTopic[];
+}
+
+export interface TreeChapter {
+  id: string;
+  chapter_number: number;
+  title: string;
+  is_published: boolean;
+  order_index: number;
+  lessons: TreeLesson[];
+  topics: TreeTopic[];
+}
+
+export interface TreeSubject {
+  id: string;
+  name: string;
+  slug: string;
+  class_number: number;
+  is_active: boolean;
+  order_index: number;
+  chapters: TreeChapter[];
+}
+
+export interface TreeClass {
+  class_number: number;
+  subjects: TreeSubject[];
+}
+
+// ── Let's Assess ─────────────────────────────────────────────────────────────
+
+export interface LetsAssessAdminQuestion {
+  id: string;
+  chapter_id: string;
+  topic_id: string | null;
+  question_number: number;
+  question_text: string;
+  question_text_ml: string | null;
+  marks: number;
+  model_answer: string;
+  model_answer_ml: string | null;
+  walkthrough_video_id: string | null;
+  walkthrough_start_seconds: number | null;
+  order_index: number;
+  created_at: string;
+}
+
+// ── Lesson Timestamps ─────────────────────────────────────────────────────────
+
+export interface LessonTimestamp {
+  id: string;
+  content_item_id: string;
+  topic_id: string;
+  start_seconds: number;
+  end_seconds: number | null;
+}
+

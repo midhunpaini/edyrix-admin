@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/content", iconName: Icons.content, label: "Content" },
   { to: "/students", iconName: Icons.students, label: "Students" },
   { to: "/tests", iconName: Icons.questions, label: "Tests" },
+  { to: "/lets-assess", iconName: Icons.questions, label: "Let's Assess" },
   { to: "/doubts", iconName: Icons.doubtQueue, label: "Doubts" },
   { to: "/revenue", iconName: Icons.revenue, label: "Revenue" },
   { to: "/notifications", iconName: Icons.notifications, label: "Notifications" },

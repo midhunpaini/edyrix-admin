@@ -7,6 +7,7 @@ import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { ContentManagerPage } from "./pages/ContentManagerPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DoubtQueuePage } from "./pages/DoubtQueuePage";
+import { LetsAssessAdminPage } from "./pages/LetsAssessAdminPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { QuestionEditorPage } from "./pages/QuestionEditorPage";
 import { RevenuePage } from "./pages/RevenuePage";
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="content" element={<ContentManagerPage />} />
           <Route path="students" element={<StudentListPage />} />
           <Route path="tests" element={<QuestionEditorPage />} />
+          <Route path="lets-assess" element={<LetsAssessAdminPage />} />
           <Route path="doubts" element={<DoubtQueuePage />} />
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
